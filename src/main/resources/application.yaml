@@ -1,0 +1,20 @@
+server:
+  port: 8085
+
+spring:
+  application:
+    name: Nexora Billing Service
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/nexora_billing
+    username: postgres
+    password: postgres
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+
+eureka:
+  client:
+    service-url:
+      defultZone: http://localhost:8761/eureka/

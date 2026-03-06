@@ -5,6 +5,7 @@ import com.nexora.billing.repository.InvoiceRepository;
 import com.nexora.billing.repository.PaymentRepository;
 import com.nexora.billing.tenant.TenantContext;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -15,12 +16,16 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class BillingService {
 
     private final InvoiceRepository invoiceRepository;
     private final PaymentRepository paymentRepository;
 
     public Invoice createInvoice(UUID subscriptionId, BigDecimal amount) {
+
+        log.info("Creating invoice for tenant={} subscription={} amount={}",
+                TenantContext.getTenantId(), subscriptionId, amount);
 
         Invoice invoice = Invoice.builder()
                 .tenantId(TenantContext.getTenantId())
@@ -31,10 +36,17 @@ public class BillingService {
                 .dueDate(LocalDate.now().plusDays(30))
                 .build();
 
-        return invoiceRepository.save(invoice);
+        Invoice saved = invoiceRepository.save(invoice);
+
+        log.info("Invoice created successfully id={}", saved.getId());
+
+        return saved;
     }
 
     public Payment payInvoice(UUID invoiceId, String method) {
+
+        log.info("Processing payment invoice={} tenant={}",
+                invoiceId, TenantContext.getTenantId());
 
         Invoice invoice = invoiceRepository.findById(invoiceId)
                 .orElseThrow(() -> new RuntimeException("Invoice not found"));
@@ -50,14 +62,24 @@ public class BillingService {
                 .paymentDate(LocalDateTime.now())
                 .build();
 
-        return paymentRepository.save(payment);
+        Payment saved = paymentRepository.save(payment);
+
+        log.info("Payment completed invoice={} amount={}", invoiceId, saved.getAmount());
+
+        return saved;
     }
 
     public List<Invoice> getTenantInvoices() {
+
+        log.info("Fetching invoices for tenant {}", TenantContext.getTenantId());
+
         return invoiceRepository.findByTenantId(TenantContext.getTenantId());
     }
 
     public List<Payment> getTenantPayments() {
+
+        log.info("Fetching payments for tenant {}", TenantContext.getTenantId());
+
         return paymentRepository.findByTenantId(TenantContext.getTenantId());
     }
 }
